@@ -1,3 +1,5 @@
+# Growify Marketing Data Engineering & Analytics Pipeline
+
 ## 📌 Project Overview
 This repository contains a full-stack, end-to-end data engineering and analytics solution for Growify's marketing operations. It ingests raw messy CSVs, cleans and structures them into a highly optimized SQLite Star Schema, connects seamlessly to Power BI via ODBC for executive reporting, and provides a Streamlit-based AI chatbot for Text-to-SQL ad-hoc querying.
 
@@ -67,16 +69,19 @@ Directly executing LLM-generated SQL against a database is inherently risky. To 
 
 ---
 
-## 📊 Power BI Integration
+## 📊 Power BI Setup & Integration
 
-The Power BI Dashboard strictly connects to the generated SQLite database (`data/growify.db`) via ODBC.
+This project is designed to support direct SQLite ODBC connectivity for Power BI. To view and analyze the reports:
 
-**Required Files**:
-Please ensure the following files exist in the `/powerbi` directory:
-- `/powerbi/dashboard.pbix`
-- `/powerbi/dashboard_export.pdf`
-
----
+1. **Connect to SQLite via ODBC**:
+   - Install the SQLite ODBC Driver.
+   - Configure a System DSN pointing to the local SQLite database file: `data/growify.db`.
+   - In Power BI Desktop, select "Get Data" > "ODBC", choose your DSN, and import the three tables: `date_dimension`, `campaign_performance`, and `shopify_sales`.
+2. **Configure Star Schema Relationships**:
+   - Link `date_dimension (date_key)` [1] ───> [Many] `campaign_performance (date_key)`
+   - Link `date_dimension (date_key)` [1] ───> [Many] `shopify_sales (date_key)`
+3. **Apply Ready-made DAX Measures**:
+   - Open [Task_3_PowerBI_DAX_Measures.txt](Task_3_PowerBI_DAX_Measures.txt) and copy-paste the DAX measures (such as `Total Spend`, `Total Sales`, `ROI`, `ROAS`, and `MoM Change`) directly into your Power BI report to instantly build the visual charts.
 
 ## 📁 Airtable Integration
 
