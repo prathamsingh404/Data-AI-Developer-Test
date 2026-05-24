@@ -247,7 +247,8 @@ RULES:
 3. Use case-insensitive matches where appropriate (using LIKE) for string matching.
 4. For date comparisons, date columns are TEXT in 'YYYY-MM-DD' format. Use 'YYYY-MM-DD' literals.
 5. If calculating aggregated ratios, handle division-by-zero using CASE or COALESCE.
-6. Context from previous chat messages:
+6. SQLite does not allow ORDER BY or LIMIT clauses inside individual UNION / UNION ALL member queries unless each individual member query block is wrapped inside a subquery, e.g., SELECT * FROM (SELECT ... ORDER BY ... LIMIT ...). Ensure you do this for compound queries containing UNION/UNION ALL if they require sorting/limiting on individual sections.
+7. Context from previous chat messages:
 {chat_history_context}
 
 Question: {user_question}
@@ -337,8 +338,8 @@ st.write("Ask questions about ad spend, Facebook campaign metrics, and actual Sh
 db_exists = os.path.exists(DB_PATH)
 if db_exists:
     # Compute quick stats
-    spend_df, _ = run_query('SELECT SUM("Amount Spent (INR)") as total_spend FROM campaign_performance')
-    sales_df, _ = run_query('SELECT SUM("Total Sales (INR)") as total_sales FROM shopify_sales')
+    spend_df, _ = run_query('SELECT SUM(amount_spent_inr) as total_spend FROM campaign_performance')
+    sales_df, _ = run_query('SELECT SUM(total_sales_inr) as total_sales FROM shopify_sales')
     
     total_spend = spend_df['total_spend'].iloc[0] if spend_df is not None else 0
     total_sales = sales_df['total_sales'].iloc[0] if sales_df is not None else 0
@@ -426,7 +427,7 @@ if user_input or report_prompt:
                 correction_prompt = f"""
 The SQL query you generated failed with this error: {query_error}
 Query was: {sql_query}
-Please correct the SQL query to fix the error. Return ONLY the corrected code block.
+Please correct the SQL query to fix the error. Remember SQLite constraints (e.g. no ORDER BY/LIMIT directly in individual UNION clauses without wrapping each member query inside a subquery, like SELECT * FROM (SELECT ...)). Return ONLY the corrected code block.
 """
                 corrected_sql, _ = text_to_sql(correction_prompt, context_str)
                 if corrected_sql:
