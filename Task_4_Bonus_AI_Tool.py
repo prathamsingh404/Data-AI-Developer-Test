@@ -7,6 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import requests
 import json
+import re
 from dotenv import load_dotenv
 
 # Load env variables (for GEMINI_API_KEY)
@@ -86,10 +87,13 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "data", "growify.db")
 # Helper to run SQL queries safely
 def run_query(sql_query):
     # SQL Injection protection - Prevent destructive operations
+    sql_stripped = sql_query.strip().upper()
+    if not (sql_stripped.startswith("SELECT") or sql_stripped.startswith("WITH")):
+        return None, "Security Error: Only SELECT and WITH queries are permitted."
+        
     forbidden_keywords = ['DROP', 'DELETE', 'ALTER', 'UPDATE', 'INSERT', 'CREATE', 'REPLACE']
-    upper_query = sql_query.upper()
     for kw in forbidden_keywords:
-        if re.search(rf'\b{kw}\b', upper_query):
+        if re.search(rf'\b{kw}\b', sql_stripped):
             return None, f"Security Error: The query contains forbidden keyword '{kw}' and was blocked."
             
     try:

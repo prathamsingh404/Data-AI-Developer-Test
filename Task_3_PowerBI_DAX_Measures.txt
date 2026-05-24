@@ -8,20 +8,19 @@ required to build the 3-page marketing performance report.
 --------------------------------------------------------------------
 1. DATA MODEL RELATIONSHIPS (STAR SCHEMA)
 --------------------------------------------------------------------
-Import the SQLite database ('growify.db') or the tables from the 
-respective cleaned database files. Set up the following active
-relationships in the "Model View":
+Import the SQLite database ('growify.db') via ODBC. Set up the 
+following active relationships in the "Model View":
 
 - Relationship 1 (One-to-Many):
-  Table: date_dimension (date_key) [1] ----> [Many] campaign_performance (Date)
+  Table: date_dimension (date_key) [1] ----> [Many] campaign_performance (date_key)
   Cross filter direction: Single
 
 - Relationship 2 (One-to-Many):
-  Table: date_dimension (date_key) [1] ----> [Many] shopify_sales (Date)
+  Table: date_dimension (date_key) [1] ----> [Many] shopify_sales (date_key)
   Cross filter direction: Single
 
 - Relationship 3 (Optional, for Brand filter context):
-  Let the User slice both Sales and Campaigns by Brand/Data Source name.
+  Let the User slice both Sales and Campaigns by Brand/data_source_name.
 
 --------------------------------------------------------------------
 2. CORE DAX MEASURES
@@ -29,25 +28,25 @@ relationships in the "Model View":
 Create a new table named "Key Measures" and paste the following formulas:
 
 -- A. Total Spend
-Total Spend = SUM(campaign_performance[Amount Spent (INR)])
+Total Spend = SUM(campaign_performance[amount_spent_inr])
 
 -- B. Total Sales (Actual Shopify revenue)
-Total Sales = SUM(shopify_sales[Total Sales (INR)])
+Total Sales = SUM(shopify_sales[total_sales_inr])
 
 -- C. ROI (Return on Investment: Actual Sales / Ad Spend)
 ROI = DIVIDE([Total Sales], [Total Spend], 0)
 
 -- D. Total Conversions (Ad Purchases)
-Total Conversions = SUM(campaign_performance[Purchases])
+Total Conversions = SUM(campaign_performance[purchases])
 
 -- E. Click-Through Rate (CTR %)
-CTR % = DIVIDE(SUM(campaign_performance[Clicks (all)]), SUM(campaign_performance[Impressions]), 0)
+CTR % = DIVIDE(SUM(campaign_performance[clicks]), SUM(campaign_performance[impressions]), 0)
 
 -- F. Cost Per Click (CPC)
-CPC = DIVIDE([Total Spend], SUM(campaign_performance[Clicks (all)]), 0)
+CPC = DIVIDE([Total Spend], SUM(campaign_performance[clicks]), 0)
 
 -- G. Return on Ad Spend (ROAS: Ad Revenue / Ad Spend)
-ROAS = DIVIDE(SUM(campaign_performance[Purchases Conversion Value (INR)]), [Total Spend], 0)
+ROAS = DIVIDE(SUM(campaign_performance[purchases_conversion_value_inr]), [Total Spend], 0)
 
 -- H. Month-over-Month (MoM) Spend Change (Absolute value difference)
 MoM Spend Change = 
@@ -61,6 +60,14 @@ MoM Spend Change % =
 VAR PreviousSpend = CALCULATE([Total Spend], DATEADD(date_dimension[date_key], -1, MONTH))
 RETURN
 DIVIDE([MoM Spend Change], PreviousSpend, 0)
+
+-- J. Countrywise Performance (Spend by Region)
+Countrywise Spend = 
+CALCULATE([Total Spend], ALLEXCEPT(campaign_performance, campaign_performance[region]))
+
+-- K. Countrywise Performance (Sales by Shipping Country)
+Countrywise Sales = 
+CALCULATE([Total Sales], ALLEXCEPT(shopify_sales, shopify_sales[shipping_country]))
 
 --------------------------------------------------------------------
 3. DASHBOARD PAGE STRUCTURING INSTRUCTIONS
@@ -80,29 +87,29 @@ PAGE 1: Executive Summary
 PAGE 2: Channel Breakdown
 ---------------------------------------------
 - Performance by Platform (Bar Chart):
-  * Y-axis: campaign_performance[Data Source name]
+  * Y-axis: campaign_performance[data_source_name]
   * X-axis: [Total Spend] and [Total Sales] side-by-side or stacked.
 - Channel Mix (Donut Chart):
-  * Legend: campaign_performance[Adset Channel]
+  * Legend: campaign_performance[adset_channel]
   * Value: [Total Spend]
-- Region Matrix (Matrix Visual):
-  * Rows: campaign_performance[Region] (or shopify_sales[Shipping Country])
-  * Columns: date_dimension[MonthName]
-  * Values: [Total Spend], [Total Sales], [ROAS].
+- Region Matrix (Matrix Visual) [Countrywise Performance]:
+  * Rows: campaign_performance[region] (or shopify_sales[shipping_country])
+  * Columns: date_dimension[month_name]
+  * Values: [Countrywise Spend], [Countrywise Sales], [ROAS].
 
 PAGE 3: Audience Insights
 ---------------------------------------------
 - Conversion Rate by Segment (Bar Chart):
-  * Y-axis: campaign_performance[Adset Target] (LAL, Open, Engaged etc.)
-  * X-axis: Average of campaign_performance[CTR] or [CTR %]
+  * Y-axis: campaign_performance[adset_target] (LAL, Open, Engaged etc.)
+  * X-axis: Average of campaign_performance[ctr] or [CTR %]
 - Scatter of Spend vs Conversions:
   * X-axis: [Total Spend]
   * Y-axis: [Total Conversions]
-  * Details/Play Axis: campaign_performance[Campaign Name]
+  * Details/Play Axis: campaign_performance[campaign_name]
   * This surfaces which campaigns are highly efficient vs wasteful.
 
 SLICERS (Cross-Page & Local)
 ---------------------------------------------
 - Cross-Page Date Slicer: date_dimension[date_key] as a slider range.
-- Brand Name Slicer: campaign_performance[Data Source name] (Brand A / Brand B).
-- Drill-through: Configure campaign_performance[Campaign Name] as a drill-through filter to redirect from Page 1's top campaigns table to a detailed Campaign Analysis sub-page.
+- Brand Name Slicer: campaign_performance[data_source_name] (Brand A / Brand B).
+- Drill-through: Configure campaign_performance[campaign_name] as a drill-through filter to redirect from Page 1's top campaigns table to a detailed Campaign Analysis sub-page.

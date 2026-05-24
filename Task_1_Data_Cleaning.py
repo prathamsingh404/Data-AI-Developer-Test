@@ -14,7 +14,7 @@ os.makedirs(data_dir, exist_ok=True)
 db_path = os.path.join(data_dir, "growify.db")
 campaign_db_path = os.path.join(data_dir, "cleaned_campaigns.db")
 shopify_db_path = os.path.join(data_dir, "cleaned_Shopify.db")
-schema_path = os.path.join(BASE_DIR, "Task_2_SQL_Schema.sql")
+schema_path = os.path.join(BASE_DIR, "sql", "schema.sql")
 
 # Report variables
 report_logs = []
