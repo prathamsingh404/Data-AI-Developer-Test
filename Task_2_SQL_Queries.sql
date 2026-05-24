@@ -3,36 +3,36 @@
 -- Aggregated performance by platform, channel, region, and month
 -- ========================================================
 SELECT 
-    cp."Data Source name" AS Platform,
-    cp."Adset Channel" AS Channel,
-    cp.Region AS Region,
+    cp.data_source_name AS Platform,
+    cp.adset_channel AS Channel,
+    cp.region AS Region,
     dt.year AS Year,
     dt.month AS MonthNumber,
     dt.month_name AS MonthName,
-    SUM(cp."Amount Spent (INR)") AS Total_Spend,
-    SUM(cp."Clicks (all)") AS Total_Clicks,
-    SUM(cp.Impressions) AS Total_Impressions,
-    SUM(cp.Purchases) AS Total_Conversions,
-    SUM(cp."Purchases Conversion Value (INR)") AS Total_Revenue,
+    SUM(cp.amount_spent_inr) AS Total_Spend,
+    SUM(cp.clicks) AS Total_Clicks,
+    SUM(cp.impressions) AS Total_Impressions,
+    SUM(cp.purchases) AS Total_Conversions,
+    SUM(cp.purchases_conversion_value_inr) AS Total_Revenue,
     -- Recalculated aggregated metrics
     CASE 
-        WHEN SUM(cp.Impressions) > 0 THEN SUM(cp."Clicks (all)") / SUM(cp.Impressions) 
+        WHEN SUM(cp.impressions) > 0 THEN (SUM(cp.clicks) / SUM(cp.impressions)) * 100 
         ELSE 0 
     END AS Aggregated_CTR,
     CASE 
-        WHEN SUM(cp."Clicks (all)") > 0 THEN SUM(cp."Amount Spent (INR)") / SUM(cp."Clicks (all)") 
+        WHEN SUM(cp.clicks) > 0 THEN SUM(cp.amount_spent_inr) / SUM(cp.clicks) 
         ELSE 0 
     END AS Aggregated_CPC,
     CASE 
-        WHEN SUM(cp."Amount Spent (INR)") > 0 THEN SUM(cp."Purchases Conversion Value (INR)") / SUM(cp."Amount Spent (INR)") 
+        WHEN SUM(cp.amount_spent_inr) > 0 THEN SUM(cp.purchases_conversion_value_inr) / SUM(cp.amount_spent_inr) 
         ELSE 0 
     END AS Aggregated_ROAS
 FROM campaign_performance cp
-JOIN date_dimension dt ON cp.Date = dt.date_key
+JOIN date_dimension dt ON cp.date_key = dt.date_key
 GROUP BY 
-    cp."Data Source name",
-    cp."Adset Channel",
-    cp.Region,
+    cp.data_source_name,
+    cp.adset_channel,
+    cp.region,
     dt.year,
     dt.month,
     dt.month_name
@@ -48,25 +48,25 @@ ORDER BY
 -- ========================================================
 -- Example with placeholder filters (the AI tool will dynamically construct/fill these):
 SELECT 
-    cp.Date,
-    cp."Data Source name" AS Platform,
-    cp."Campaign Name" AS Campaign,
-    cp."Funnel Stage" AS Funnel_Stage,
-    cp.Region AS Region,
-    cp."Ad Name" AS Ad_Name,
-    cp."Amount Spent (INR)" AS Spend,
-    cp."Clicks (all)" AS Clicks,
-    cp.Impressions,
-    cp.Purchases,
-    cp."Purchases Conversion Value (INR)" AS Purchases_Value,
-    cp.CTR,
-    cp.CPC,
-    cp.CPM,
-    cp.ROI
+    cp.date_key AS Date,
+    cp.data_source_name AS Platform,
+    cp.campaign_name AS Campaign,
+    cp.funnel_stage AS Funnel_Stage,
+    cp.region AS Region,
+    cp.ad_name AS Ad_Name,
+    cp.amount_spent_inr AS Spend,
+    cp.clicks AS Clicks,
+    cp.impressions,
+    cp.purchases,
+    cp.purchases_conversion_value_inr AS Purchases_Value,
+    cp.ctr,
+    cp.cpc,
+    cp.cpm,
+    cp.roas
 FROM campaign_performance cp
 WHERE 
-    cp.Date BETWEEN '2026-03-01' AND '2026-03-31'  -- Dynamic Date Range
-    AND cp."Data Source name" LIKE '%Brand A%'        -- Dynamic Platform filter
-    AND cp.Region = 'India'                           -- Dynamic Region filter
-    AND cp."Campaign Name" LIKE '%TOF%'               -- Dynamic Campaign filter
-ORDER BY cp.Date ASC;
+    cp.date_key BETWEEN '2026-03-01' AND '2026-03-31'  -- Dynamic Date Range
+    AND cp.data_source_name LIKE '%Brand A%'        -- Dynamic Platform filter
+    AND cp.region = 'India'                           -- Dynamic Region filter
+    AND cp.campaign_name LIKE '%TOF%'               -- Dynamic Campaign filter
+ORDER BY cp.date_key ASC;
