@@ -57,7 +57,7 @@ Directly executing LLM-generated SQL against a database is inherently risky. To 
 1. **Strict Query Prefixing**: The Python execution function uses regex and string validation to ensure the LLM's query **strictly** starts with `SELECT` or `WITH`.
 2. **Blacklisted DDL/DML**: The tool actively scans and blocks destructive keywords (`DROP`, `DELETE`, `ALTER`, `UPDATE`, `INSERT`, `CREATE`, `REPLACE`).
 
-![AI Chatbot Placeholder](powerbi/ai_chatbot.png) *(Replace with actual AI tool screenshot)*
+![AI Chatbot Dashboard](powerbi/ai_chatbot.png)
 
 ### 10 Example AI Questions You Can Try
 1. Which campaign had the worst CPC in March 2026?
