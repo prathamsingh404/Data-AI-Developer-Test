@@ -1,9 +1,3 @@
-# Growify Marketing Data Engineering & Analytics Pipeline
-
-![Dashboard Screenshot Placeholder](powerbi/dashboard_export.pdf) *(Replace with actual dashboard screenshot/PDF path)*
-
-> **[🎥 View Full Video Explanation Here]** *(Add Loom/YouTube link here)*
-
 ## 📌 Project Overview
 This repository contains a full-stack, end-to-end data engineering and analytics solution for Growify's marketing operations. It ingests raw messy CSVs, cleans and structures them into a highly optimized SQLite Star Schema, connects seamlessly to Power BI via ODBC for executive reporting, and provides a Streamlit-based AI chatbot for Text-to-SQL ad-hoc querying.
 
