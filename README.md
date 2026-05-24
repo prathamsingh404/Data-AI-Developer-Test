@@ -1,85 +1,72 @@
-# Growify performance marketing: Data Analyst + AI Developer Pipeline
+# Growify Performance Marketing Data Pipeline and Analytics Application
 
-This repository contains the complete end-to-end data pipeline built for Growify. The pipeline processes raw, messy performance marketing and Shopify sales data, cleans and validates it using Python, loads it into a star-schema SQLite database, defines DAX measures for client reporting, and implements a Text-to-SQL AI Insight Chatbot.
+This repository contains a comprehensive data engineering and analytics pipeline developed for Growify. The project demonstrates the end-to-end processing of marketing performance and e-commerce sales data, from raw data ingestion and cleaning to advanced SQL modeling and AI-driven insights generation.
 
----
+## Project Architecture
 
-## Directory Structure
+The architecture consists of four primary analytical components:
 
-```
-├── data/
-│   ├── growify.db                  # Unified SQLite database (SSOT)
-│   ├── cleaned_campaigns.db        # Cleaned Campaign database
-│   └── cleaned_Shopify.db          # Cleaned Shopify Sales database
-├── python/
-│   ├── clean_data.py               # Python cleaning & database loading pipeline
-│   └── data_quality_report.md      # Detailed data quality audit log
-├── sql/
-│   ├── schema.sql                  # Database schema definitions and constraints
-│   └── queries.sql                 # Queries for Power BI feeds & chatbot context
-├── powerbi/
-│   └── dax_measures.txt            # Copy-pasteable DAX measures & visualization guide
-├── ai_tool/
-│   ├── app.py                      # Streamlit chatbot application
-│   └── README.md                   # Chatbot setup, architecture and sample questions
-├── README.md                       # Main repository documentation
-└── requirements.txt                # Python package dependencies
-```
+1. Data Extraction and Transformation (ETL)
+2. Relational Database Modeling (Star Schema)
+3. Business Intelligence Semantic Layer (DAX Metrics)
+4. AI Insight Generation Tool (Text-to-SQL)
 
----
+## Repository Structure
 
-## Pipeline Architecture
+The project has been organized into distinctly separated files corresponding to individual task requirements:
 
-```mermaid
-graph TD
-    A[Campaign_Raw.csv] -->|clean_data.py| C[(growify.db)]
-    B[Raw_Shopify_Sales.csv] -->|clean_data.py| C
-    C -->|schema.sql / queries.sql| D[Power BI Dashboard]
-    C -->|dynamic Text-to-SQL| E[AI Insight Tool Streamlit]
+- `Task_1_Data_Cleaning.py`: The core Python ETL script handling missing values, standardizing dates, resolving numeric sign discrepancies, parsing campaign taxonomies, and generating calculated metrics.
+- `Task_1_Data_Quality_Report.md`: A comprehensive data quality audit log generated post-execution of the ETL pipeline, documenting the specific transformations applied to the raw datasets.
+- `Task_2_SQL_Schema.sql`: Database schema definition containing DDL statements for establishing the unified star schema (`growify.db`).
+- `Task_2_SQL_Queries.sql`: A collection of essential SQL queries designed to feed downstream Business Intelligence tools and validate fact-dimension relationships.
+- `Task_3_PowerBI_DAX_Measures.txt`: Defined DAX measures required for Power BI semantic modeling, providing logic for spend, ROI, CTR, and period-over-period calculations.
+- `Task_4_Bonus_AI_Tool.py`: A Streamlit application integrating Large Language Models (LLM) with the SQLite database to facilitate natural language querying of marketing performance.
+- `Task_4_Bonus_AI_Tool_README.md`: Specific technical documentation detailing the architecture, auto-correction loop, and usage of the AI Insight tool.
+
+## Setup Instructions
+
+### Environment Configuration
+
+Ensure you have Python 3.9+ installed. Install the necessary dependencies via the requirements file:
+
+```bash
+pip install -r requirements.txt
 ```
 
-### 1. Python Data Cleaning (`/python`)
-- **Deduplication**: Exact duplicate rows are detected and removed.
-- **Date Standardization**: Reconstructs missing dates in Shopify Sales from transaction timestamps, normalizes all date formats to `YYYY-MM-DD`.
-- **Numeric Normalization**: Fixes negative values (spend, clicks, impressions) resulting from system sign-flips via absolute values.
-- **Categorical Normalization**: Uniform casing and spacing mapping (e.g. platform casing, country names).
-- **Recalculations**: Recomputes performance metrics (CTR, CPC, CPM, ROI, Net Sales, Total Sales) to guarantee accuracy.
-- **Dimension Parsing**: Parses ad campaigns, adsets, and ads naming conventions into queryable star-schema sub-fields (Brand, Funnel Stage, Region, Creative Format, Target Audience, etc.).
+### 1. Data Processing Execution
 
-### 2. SQL Star Schema Database (`/sql`)
-- Database contains three tables: `date_dimension`, `campaign_performance`, and `shopify_sales`.
-- Configured foreign key constraints and index structures on dates and campaign details to optimize query execution times.
+Execute the data cleaning and ingestion script. This operation will process `Campaign_Raw.csv` and `Raw_Shopify_Sales.csv`, create the `data/` directory, and output the SQLite database files.
 
-### 3. Power BI Modeling & DAX (`/powerbi`)
-- Star schema model relationships documented.
-- Copy-pasteable DAX measures provided for client reporting (Spend, Revenue, CTR, CPC, ROAS, ROI, and MoM changes).
+```bash
+python Task_1_Data_Cleaning.py
+```
 
-### 4. AI Insight Chatbot (`/ai_tool`)
-- Streamlit application using LLM (Gemini) dynamic Text-to-SQL.
-- Features auto-correction execution loop, conversational context memory, sidebar shortcuts for key analytical reports, and Plotly interactive chart rendering.
+Upon successful execution, the following database assets will be generated:
+- `data/growify.db`: The unified star schema integrating both marketing performance and sales data.
+- `data/cleaned_campaigns.db`: Isolated marketing performance data.
+- `data/cleaned_Shopify.db`: Isolated e-commerce sales data.
 
----
+### 2. Business Intelligence Integration
 
-## Quick Start Setup
+The generated `growify.db` can be directly connected to Power BI via the standard ODBC or SQLite connector. Utilize the measures defined in `Task_3_PowerBI_DAX_Measures.txt` to construct the semantic model.
 
-1. **Install Dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 3. AI Insight Tool Configuration
 
-2. **Run Data Cleaning**:
-   ```bash
-   python python/clean_data.py
-   ```
-   This generates the databases inside the `data/` directory and updates `python/data_quality_report.md`.
+To leverage the AI capabilities, an API key must be configured. Create a `.env` file in the root directory:
 
-3. **Configure API Key for AI Chatbot**:
-   Set your API key in a `.env` file in the root directory:
-   ```bash
-   GEMINI_API_KEY=your_gemini_api_key_here
-   ```
+```bash
+GEMINI_API_KEY=your_gemini_api_key_here
+```
 
-4. **Launch AI chatbot**:
-   ```bash
-   streamlit run ai_tool/app.py
-   ```
+Launch the Streamlit application:
+
+```bash
+streamlit run Task_4_Bonus_AI_Tool.py
+```
+
+## Technical Implementation Details
+
+- **Data Imputation Strategy**: Missing dates in sales data were reconstructed using transaction timestamps. Missing metric records in campaign data were isolated for audit.
+- **Normalization**: Negative metrics resulting from systemic sign-flips were corrected via absolute value transformations. String fields were standardized to Title Case to ensure precise grouping.
+- **Schema Design**: The implementation utilizes a central `date_dimension` linked to `campaign_performance` and `shopify_sales` fact tables to enable cross-functional reporting.
+- **AI Text-to-SQL Architecture**: The Streamlit tool dynamically injects the database schema into the LLM context, allowing generation of strict SQLite syntax. An auto-correction loop is implemented to catch and rectify execution errors in real-time.
