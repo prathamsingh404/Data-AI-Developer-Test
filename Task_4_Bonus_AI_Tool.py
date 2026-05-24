@@ -5,6 +5,8 @@ import os
 import sqlite3
 import plotly.express as px
 import plotly.graph_objects as go
+import requests
+import json
 from dotenv import load_dotenv
 
 # Load env variables (for GEMINI_API_KEY)
@@ -91,32 +93,60 @@ def run_query(sql_query):
     except Exception as e:
         return None, str(e)
 
-# LLM Client wrapper supporting both google-genai and older library
+# LLM Client wrapper supporting both Gemini and Groq
 def get_llm_response(prompt):
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        return " Gemini API key is missing. Please set the GEMINI_API_KEY environment variable.", None
-
-    # Method 1: Try new google-genai library
-    try:
-        from google import genai
-        from google.genai import types
-        client = genai.Client(api_key=api_key)
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt,
-        )
-        return response.text, None
-    except Exception as e_new:
-        # Method 2: Fallback to google-generativeai library
+    provider = st.session_state.get("llm_provider", "Gemini")
+    
+    if provider == "Groq":
+        api_key = st.session_state.get("groq_api_key") or os.environ.get("GROQ_API_KEY")
+        if not api_key:
+            return None, "Groq API key is missing. Please configure it in the sidebar or environment variables."
+        
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": "llama-3.3-70b-specdec",
+            "messages": [
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.1
+        }
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            response = model.generate_content(prompt)
+            response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+            return data['choices'][0]['message']['content'], None
+        except Exception as e:
+            return None, f"Groq API call failed: {str(e)}"
+            
+    else:
+        # Default to Gemini
+        api_key = st.session_state.get("gemini_api_key") or os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            return None, "Gemini API key is missing. Please configure it in the sidebar or environment variables."
+
+        # Method 1: Try new google-genai library
+        try:
+            from google import genai
+            from google.genai import types
+            client = genai.Client(api_key=api_key)
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt,
+            )
             return response.text, None
-        except Exception as e_old:
-            return None, f"Failed to call Gemini API. New SDK Error: {str(e_new)}. Old SDK Error: {str(e_old)}"
+        except Exception as e_new:
+            # Method 2: Fallback to google-generativeai library
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=api_key)
+                model = genai.GenerativeModel("gemini-1.5-flash")
+                response = model.generate_content(prompt)
+                return response.text, None
+            except Exception as e_old:
+                return None, f"Failed to call Gemini API. New SDK Error: {str(e_new)}. Old SDK Error: {str(e_old)}"
 
 # Database schema summary to pass to the LLM
 DB_SCHEMA = """
@@ -256,6 +286,19 @@ if "messages" not in st.session_state:
 
 # Sidebar options and report actions
 st.sidebar.title(" Growify Control Panel")
+st.sidebar.markdown("---")
+
+st.sidebar.subheader("API Configuration")
+provider = st.sidebar.selectbox("LLM Provider", ["Gemini", "Groq"], index=0)
+st.session_state["llm_provider"] = provider
+
+if provider == "Gemini":
+    gemini_key = st.sidebar.text_input("Gemini API Key", type="password", value=os.environ.get("GEMINI_API_KEY", ""))
+    st.session_state["gemini_api_key"] = gemini_key
+else:
+    groq_key = st.sidebar.text_input("Groq API Key", type="password", value=os.environ.get("GROQ_API_KEY", ""))
+    st.session_state["groq_api_key"] = groq_key
+
 st.sidebar.markdown("---")
 
 # Predefined analytical reports
